@@ -1,0 +1,60 @@
+{
+  "_args": [
+    [
+      {
+        "raw": "/tmp/d-118121-20626-11bth0a.qbinewmi/package.tgz",
+        "scope": null,
+        "escapedName": null,
+        "name": null,
+        "rawSpec": "/tmp/d-118121-20626-11bth0a.qbinewmi/package.tgz",
+        "spec": "/tmp/d-118121-20626-11bth0a.qbinewmi/package.tgz",
+        "type": "local"
+      },
+      "/tmp/apm-install-dir-118121-20626-1r2pdf0.zafw8nnrk9"
+    ]
+  ],
+  "_from": "../d-118121-20626-11bth0a.qbinewmi/package.tgz",
+  "_id": "linter-puppet@1.0.0",
+  "_inCache": true,
+  "_location": "/linter-puppet",
+  "_phantomChildren": {},
+  "_requested": {
+    "raw": "/tmp/d-118121-20626-11bth0a.qbinewmi/package.tgz",
+    "scope": null,
+    "escapedName": null,
+    "name": null,
+    "rawSpec": "/tmp/d-118121-20626-11bth0a.qbinewmi/package.tgz",
+    "spec": "/tmp/d-118121-20626-11bth0a.qbinewmi/package.tgz",
+    "type": "local"
+  },
+  "_requiredBy": [
+    "#USER"
+  ],
+  "_resolved": "file:../d-118121-20626-11bth0a.qbinewmi/package.tgz",
+  "_shasum": "e3bbf241a5e4970951753e312a2f2545d55d39f6",
+  "_shrinkwrap": null,
+  "_spec": "/tmp/d-118121-20626-11bth0a.qbinewmi/package.tgz",
+  "_where": "/tmp/apm-install-dir-118121-20626-1r2pdf0.zafw8nnrk9",
+  "bugs": {
+    "url": "https://github.com/marcelocarlosbr/linter-puppet/issues"
+  },
+  "dependencies": {},
+  "description": "Lint puppet, using puppet parser",
+  "devDependencies": {},
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "homepage": "https://github.com/marcelocarlosbr/linter-puppet",
+  "license": "MIT",
+  "linter-package": true,
+  "main": "./lib/init",
+  "name": "linter-puppet",
+  "optionalDependencies": {},
+  "readme": "# linter-puppet",
+  "readmeFilename": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marcelocarlosbr/linter-puppet.git"
+  },
+  "version": "1.0.0"
+}

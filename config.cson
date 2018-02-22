@@ -1,9 +1,19 @@
 "*":
+  "bracket-matcher": {}
   core:
+    disabledPackages: [
+      "autocomplete-plus"
+      "vim-mode-plus"
+      "terminal-plus"
+      "scroll-through-time"
+    ]
     telemetryConsent: "no"
   editor:
-    fontSize: 10
+    fontSize: 9
     showIndentGuide: true
     softWrap: true
+    tabLength: 8
   "exception-reporting":
     userId: "e4e461d9-4d7f-4476-8b2b-02a5c5935eeb"
+  welcome:
+    showOnStartup: false

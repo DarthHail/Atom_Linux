@@ -1,0 +1,67 @@
+{
+  "_args": [
+    [
+      {
+        "raw": "/tmp/d-118121-20886-1ygf0mf.8gn1att9/package.tgz",
+        "scope": null,
+        "escapedName": null,
+        "name": null,
+        "rawSpec": "/tmp/d-118121-20886-1ygf0mf.8gn1att9/package.tgz",
+        "spec": "/tmp/d-118121-20886-1ygf0mf.8gn1att9/package.tgz",
+        "type": "local"
+      },
+      "/tmp/apm-install-dir-118121-20886-184uqmz.dnnvh7iudi"
+    ]
+  ],
+  "_from": "../d-118121-20886-1ygf0mf.8gn1att9/package.tgz",
+  "_id": "linter-puppet-parser@0.1.1",
+  "_inCache": true,
+  "_location": "/linter-puppet-parser",
+  "_phantomChildren": {},
+  "_requested": {
+    "raw": "/tmp/d-118121-20886-1ygf0mf.8gn1att9/package.tgz",
+    "scope": null,
+    "escapedName": null,
+    "name": null,
+    "rawSpec": "/tmp/d-118121-20886-1ygf0mf.8gn1att9/package.tgz",
+    "spec": "/tmp/d-118121-20886-1ygf0mf.8gn1att9/package.tgz",
+    "type": "local"
+  },
+  "_requiredBy": [
+    "#USER"
+  ],
+  "_resolved": "file:../d-118121-20886-1ygf0mf.8gn1att9/package.tgz",
+  "_shasum": "0ed8930aaf57b05d4b504e98ee40f3171583cba6",
+  "_shrinkwrap": null,
+  "_spec": "/tmp/d-118121-20886-1ygf0mf.8gn1att9/package.tgz",
+  "_where": "/tmp/apm-install-dir-118121-20886-184uqmz.dnnvh7iudi",
+  "activationCommands": {},
+  "bugs": {
+    "url": "https://github.com/asquelt/linter-puppet-parser/issues"
+  },
+  "dependencies": {},
+  "description": "Linter plugin for Puppet, using puppet parser validate",
+  "devDependencies": {},
+  "engines": {
+    "atom": ">=1.0.0"
+  },
+  "homepage": "https://github.com/asquelt/linter-puppet-parser#readme",
+  "license": "MIT",
+  "main": "./lib/init",
+  "name": "linter-puppet-parser",
+  "optionalDependencies": {},
+  "providedServices": {
+    "linter": {
+      "versions": {
+        "1.0.0": "puppetParserLinter"
+      }
+    }
+  },
+  "readme": "# linter-puppet-parser\n\nThis package will lint your `.pp` opened files in Atom through [puppet parser validate](https://puppetlabs.com/blog/verifying-puppet-checking-syntax-and-writing-automated-tests).\n\n## Installation\n\n* Install [puppet](https://puppetlabs.com/puppet/puppet-open-source)\n* `$ apm install linter` (if you don't have [linter](https://github.com/AtomLinter/Linter) yet installed)\n* `$ apm install linter-puppet-parser`\n\n## Settings\nYou can configure linter-puppet-parser by editing your ~/.atom/config.cson (on Linux). You can do this from Atom itself by choosing Open Your Config in Atom Edit menu. All the settings are optional and have reasonable defaults.\n```\n'linter-puppet-parser':\n  # eg. --parser future\n  # default: --disable_warnings=deprecations\n  'puppetArguments': '--parser future'\n  # eg '/usr/bin/puppet'\n  # default: puppet\n  'puppetExecutablePath': '/usr/bin/puppet'\n```\n",
+  "readmeFilename": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/asquelt/linter-puppet-parser.git"
+  },
+  "version": "0.1.1"
+}
