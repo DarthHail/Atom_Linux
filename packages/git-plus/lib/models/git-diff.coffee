@@ -26,7 +26,7 @@ prepFile = (text, filePath) ->
         if err then reject err else resolve true
 
 splitDiff = (repo, pathToFile) ->
-  atom.workspace.open(pathToFile, {
+  atom.workspace.open(Path.join(repo.getWorkingDirectory(),pathToFile), {
     split: 'left',
     activatePane: false,
     activateItem: true,
@@ -35,7 +35,7 @@ splitDiff = (repo, pathToFile) ->
 
 module.exports = (repo, {diffStat, file}={}) ->
   file ?= repo.relativize(atom.workspace.getActiveTextEditor()?.getPath())
-  if file and file isnt '.' and atom.config.get('git-plus.experimental.useSplitDiff')
+  if file and file isnt '.' and atom.config.get('git-plus.diffs.useSplitDiff')
     splitDiff(repo, file)
   else
     diffFilePath = Path.join(repo.getPath(), "atom_git_plus.diff")

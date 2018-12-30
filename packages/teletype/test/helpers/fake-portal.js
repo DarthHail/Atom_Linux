@@ -1,24 +1,18 @@
 const {FollowState} = require('@atom/teletype-client')
+const FakeBufferProxy = require('./fake-buffer-proxy')
 const FakeEditorProxy = require('./fake-editor-proxy')
 
 module.exports =
 class FakePortal {
-  constructor () {
+  constructor ({siteId} = {}) {
+    this.siteId = siteId
     this.activeEditorProxyChangeCount = 0
   }
 
   dispose () {}
 
   createBufferProxy () {
-    return {
-      dispose () {},
-      setDelegate () {},
-      createCheckpoint () {},
-      groupChangesSinceCheckpoint () {},
-      applyGroupingInterval () {},
-      revertToCheckpoint () {},
-      setTextInRange () {}
-    }
+    return new FakeBufferProxy()
   }
 
   createEditorProxy () {
@@ -51,8 +45,6 @@ class FakePortal {
     this.activeEditorProxy = editorProxy
     this.activeEditorProxyChangeCount++
   }
-
-  removeEditorProxy () {}
 
   getActiveEditorProxy () {
     return this.activeEditorProxy

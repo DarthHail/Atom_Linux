@@ -3,6 +3,8 @@ Path = require 'path'
 fs = require 'fs-plus'
 git = require '../git'
 notifier = require '../notifier'
+ActivityLogger = require('../activity-logger').default
+Repository = require('../repository').default
 
 disposables = new CompositeDisposable
 
@@ -46,16 +48,17 @@ diffFiles = (previousFiles, currentFiles) ->
   previousFiles.filter (p) -> p.path in currentPaths is false
 
 parse = (prevCommit) ->
-  lines = prevCommit.split(/\n/).filter (line) -> line isnt '/n'
-  statusRegex = /(([ MADRCU?!])\s(.*))/
-  indexOfStatus = lines.findIndex (line) -> statusRegex.test line
+  statusRegex = /\n{2,}((?:(?::\w{6} \w{6}(?: \w{7}\.{3}){2} [ MADRCU?!]\s+.+?\n?))*)$/
+  firstSpliting = statusRegex.exec prevCommit
 
-  prevMessage = lines.splice 0, indexOfStatus - 1
-  prevMessage.reverse()
-  prevMessage.shift() if prevMessage[0] is ''
-  prevMessage.reverse()
-  prevChangedFiles = lines.filter (line) -> line isnt ''
-  message = prevMessage.join('\n')
+  if firstSpliting?
+    message = prevCommit.substring 0, firstSpliting.index
+
+    replacerRegex = /^:\w{6} \w{6}(?: \w{7}\.{3}){2} ([ MADRCU?!].+)$/gm
+    prevChangedFiles = (firstSpliting[1].trim().replace replacerRegex, "$1").split '\n'
+  else
+    message = prevCommit.trim()
+    prevChangedFiles = []
   {message, prevChangedFiles}
 
 cleanupUnstagedText = (status) ->
@@ -105,20 +108,18 @@ showFile = (filePath) ->
     Promise.resolve(commitEditor)
 
 destroyCommitEditor = (filePath) ->
-  if atom.config.get('git-plus.general.openInPane')
-    atom.workspace.paneForURI(filePath)?.destroy()
-  else
-    atom.workspace.paneForURI(filePath).itemForURI(filePath)?.destroy()
+  atom.workspace.paneForURI(filePath).itemForURI(filePath)?.destroy()
 
-commit = (directory, filePath) ->
+commit = (repo, filePath) ->
   args = ['commit', '--amend', '--cleanup=strip', "--file=#{filePath}"]
-  git.cmd(args, cwd: directory)
+  repoName = new Repository(repo).getName()
+  git.cmd(args, cwd: repo.getWorkingDirectory())
   .then (data) ->
-    notifier.addSuccess data
+    ActivityLogger.record({ repoName, message: 'commit', output: data})
     destroyCommitEditor(filePath)
     git.refresh()
   .catch (data) ->
-    notifier.addError data
+    ActivityLogger.record({repoName,  message: 'commit', output: data, failed: true })
     destroyCommitEditor(filePath)
 
 cleanup = (currentPane, filePath) ->
@@ -130,7 +131,7 @@ module.exports = (repo) ->
   filePath = Path.join(repo.getPath(), 'COMMIT_EDITMSG')
   cwd = repo.getWorkingDirectory()
   commentChar = git.getConfig(repo, 'core.commentchar') ? '#'
-  git.cmd(['whatchanged', '-1', '--name-status', '--format=%B'], {cwd})
+  git.cmd(['whatchanged', '-1', '--format=%B'], {cwd})
   .then (amend) -> parse amend
   .then ({message, prevChangedFiles}) ->
     getStagedFiles(repo)
@@ -142,6 +143,6 @@ module.exports = (repo) ->
     .then (status) -> prepFile {commentChar, message, prevChangedFiles, status, filePath}
     .then -> showFile filePath
   .then (textEditor) ->
-    disposables.add textEditor.onDidSave -> commit(repo.getWorkingDirectory(), filePath)
+    disposables.add textEditor.onDidSave -> commit(repo, filePath)
     disposables.add textEditor.onDidDestroy -> cleanup currentPane, filePath
   .catch (msg) -> notifier.addInfo msg

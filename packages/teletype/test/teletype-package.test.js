@@ -2,18 +2,19 @@ const TeletypePackage = require('../lib/teletype-package')
 const {Errors} = require('@atom/teletype-client')
 const {TextBuffer, TextEditor} = require('atom')
 
-const {buildAtomEnvironment, destroyAtomEnvironments} = require('./helpers/atom-environments')
+const atomEnvironments = require('./helpers/atom-environments')
 const {loadPackageStyleSheets} = require('./helpers/ui-helpers')
 const assert = require('assert')
 const condition = require('./helpers/condition')
 const deepEqual = require('deep-equal')
-const EmptyPortalPaneItem = require('../lib/empty-portal-pane-item')
 const FakeCredentialCache = require('./helpers/fake-credential-cache')
 const FakeClipboard = require('./helpers/fake-clipboard')
 const FakeStatusBar = require('./helpers/fake-status-bar')
 const fs = require('fs')
 const path = require('path')
 const temp = require('temp').track()
+const url = require('url')
+const {getPortalURI} = require('../lib/uri-helpers')
 
 suite('TeletypePackage', function () {
   this.timeout(process.env.TEST_TIMEOUT_IN_MS || 5000)
@@ -51,7 +52,7 @@ suite('TeletypePackage', function () {
     for (const pack of packages) {
       await pack.deactivate()
     }
-    await destroyAtomEnvironments()
+    await atomEnvironments.destroyAtomEnvironments()
   })
 
   test('sharing and joining a portal', async function () {
@@ -108,6 +109,247 @@ suite('TeletypePackage', function () {
     assert.equal(observedGuestItems.size, 2)
   })
 
+  suite('portal URIs', () => {
+    function handleURI (pack, uri) {
+      return pack.handleURI(url.parse(uri), uri)
+    }
+
+    test('opening URI for active portal', async () => {
+      const hostEnv = buildAtomEnvironment()
+      const hostPackage = await buildPackage(hostEnv)
+      const guestEnv = buildAtomEnvironment({askBeforeJoiningPortalViaExternalApp: false})
+      const guestPackage = await buildPackage(guestEnv)
+
+      const hostPortal = await hostPackage.sharePortal()
+      const uri = `atom://teletype/portal/${hostPortal.id}`
+      await hostEnv.workspace.open()
+
+      const guestPortal = await handleURI(guestPackage, uri)
+      assert.equal(guestPortal.id, hostPortal.id)
+      assert.equal(getRemotePaneItems(guestEnv).length, 1)
+    })
+
+    test('opening URI for nonexistent portal', async () => {
+      const env = buildAtomEnvironment({askBeforeJoiningPortalViaExternalApp: false})
+      const pack = await buildPackage(env)
+      const notifications = []
+      pack.notificationManager.onDidAddNotification((n) => notifications.push(n))
+
+      const uri = 'atom://teletype/portal/00000000-0000-0000-0000-000000000000'
+      const portal = await handleURI(pack, uri)
+      assert(!portal)
+      await condition(() => notifications.find((n) => n.message === 'Portal not found'))
+    })
+
+    test('opening URI for inaccessible portal', async () => {
+      const hostEnv = buildAtomEnvironment()
+      const hostPackage = await buildPackage(hostEnv)
+
+      const TIMEOUT_IN_MILLISECONDS = 1
+      const guestEnv = buildAtomEnvironment({askBeforeJoiningPortalViaExternalApp: false})
+      const guestPackage = await buildPackage(guestEnv, {peerConnectionTimeout: TIMEOUT_IN_MILLISECONDS})
+      const notifications = []
+      guestPackage.notificationManager.onDidAddNotification((n) => notifications.push(n))
+
+      const hostPortal = await hostPackage.sharePortal()
+      const uri = `atom://teletype/portal/${hostPortal.id}`
+      await hostPackage.closeHostPortal()
+
+      const guestPortal = await handleURI(guestPackage, uri)
+      assert(!guestPortal)
+      await condition(() => notifications.find((n) => n.message === 'Failed to join portal'))
+    })
+
+    test('opening malformed URI', async () => {
+      const env = buildAtomEnvironment({askBeforeJoiningPortalViaExternalApp: false})
+      const pack = await buildPackage(env)
+      const notifications = []
+      pack.notificationManager.onDidAddNotification((n) => notifications.push(n))
+
+      let portal = await handleURI(pack, 'atom://teletype/some-unsupported-uri')
+      assert(!portal)
+      await condition(() => notifications.find((n) => n.message === 'Failed to join portal'))
+      notifications.length = 0
+
+      portal = await handleURI(pack, 'atom://teletype/portal/42')
+      assert(!portal)
+      await condition(() => notifications.find((n) => n.message === 'Failed to join portal'))
+    })
+
+    test('opening URI when not signed in', async () => {
+      const hostEnv = buildAtomEnvironment()
+      const hostPackage = await buildPackage(hostEnv)
+      const guestEnv = buildAtomEnvironment({askBeforeJoiningPortalViaExternalApp: false})
+      const guestPackage = await buildPackage(guestEnv, {signIn: false})
+
+      const hostPortal = await hostPackage.sharePortal()
+      const uri = `atom://teletype/portal/${hostPortal.id}`
+      await hostEnv.workspace.open()
+
+      const guestPortal = await handleURI(guestPackage, uri)
+      assert(!guestPortal)
+      assert.equal(getRemotePaneItems(guestEnv).length, 0)
+    })
+
+    suite('prompting when opening URI', async () => {
+      test('canceling prompt', async () => {
+        const hostPackage = await buildPackage(buildAtomEnvironment())
+        const hostPortal = await hostPackage.sharePortal()
+        const guestEnv = buildAtomEnvironment()
+        const guestPackage = await buildPackage(guestEnv)
+
+        const guestPortalPromise = handleURI(guestPackage, getPortalURI(hostPortal.id))
+        await condition(() => guestEnv.workspace.getModalPanels().length === 1)
+        guestEnv.workspace.getModalPanels()[0].item.cancel()
+
+        assert(!await guestPortalPromise)
+        assert.equal(guestEnv.workspace.getModalPanels().length, 0)
+      })
+
+      test('allow joining once', async () => {
+        const hostPackage1 = await buildPackage(buildAtomEnvironment())
+        const hostPortal1 = await hostPackage1.sharePortal()
+        const hostPackage2 = await buildPackage(buildAtomEnvironment())
+        const hostPortal2 = await hostPackage2.sharePortal()
+        const guestEnv = buildAtomEnvironment()
+        const guestPackage = await buildPackage(guestEnv)
+
+        const guestPortal1Promise = handleURI(guestPackage, getPortalURI(hostPortal1.id))
+        await condition(() => guestEnv.workspace.getModalPanels().length === 1)
+        guestEnv.workspace.getModalPanels()[0].item.confirmOnce()
+
+        assert(await guestPortal1Promise)
+        assert.equal(guestEnv.workspace.getModalPanels().length, 0)
+
+        // Ensure dialog is shown again when joining another portal.
+        handleURI(guestPackage, getPortalURI(hostPortal2.id))
+        await condition(() => guestEnv.workspace.getModalPanels().length === 1)
+      })
+
+      test('allow joining always', async () => {
+        const hostPackage1 = await buildPackage(buildAtomEnvironment())
+        const hostPortal1 = await hostPackage1.sharePortal()
+        const hostPackage2 = await buildPackage(buildAtomEnvironment())
+        const hostPortal2 = await hostPackage2.sharePortal()
+        const guestEnv = buildAtomEnvironment()
+        const guestPackage = await buildPackage(guestEnv)
+
+        const guestPortal1Promise = handleURI(guestPackage, getPortalURI(hostPortal1.id))
+        await condition(() => guestEnv.workspace.getModalPanels().length === 1)
+        guestEnv.workspace.getModalPanels()[0].item.confirmAlways()
+
+        assert(await guestPortal1Promise)
+        assert.equal(guestEnv.workspace.getModalPanels().length, 0)
+
+        // Ensure dialog is NOT shown again when joining another portal.
+        const guestPortal2Promise = handleURI(guestPackage, getPortalURI(hostPortal2.id))
+        assert.equal(guestEnv.workspace.getModalPanels().length, 0)
+        assert(await guestPortal2Promise)
+      })
+    })
+  })
+
+  suite('remote editor URIs', () => {
+    test('opening URIs for editors that the guest has already seen', async () => {
+      const hostEnv = buildAtomEnvironment()
+      const hostPackage = await buildPackage(hostEnv)
+      const guestEnv = buildAtomEnvironment()
+      const guestPackage = await buildPackage(guestEnv)
+
+      const portal = await hostPackage.sharePortal()
+      await guestPackage.joinPortal(portal.id)
+
+      const hostEditor = await hostEnv.workspace.open(path.join(temp.path(), 'a.md'))
+      hostEditor.setText('some text')
+      await hostEnv.workspace.open(path.join(temp.path(), 'b.txt'))
+      await condition(() => getRemotePaneItems(guestEnv).length === 2)
+
+      let guestEditor = guestEnv.workspace.getPaneItems()[0]
+      const editorURI = guestEditor.getURI()
+      guestEditor.destroy()
+
+      guestEditor = await guestEnv.workspace.open(editorURI)
+      assert(guestEditor.getTitle().endsWith('a.md'))
+      assert.equal(guestEditor.getURI(), editorURI)
+      assert.equal(guestEditor.getText(), 'some text')
+
+      guestEditor.insertText('abc')
+      await condition(() => hostEditor.getText() === guestEditor.getText())
+    })
+
+    test('opening URIs for editors that the guest has not yet seen', async () => {
+      const hostEnv = buildAtomEnvironment()
+      const hostPackage = await buildPackage(hostEnv)
+      const guestEnv = buildAtomEnvironment()
+      const guestPackage = await buildPackage(guestEnv)
+
+      const portal = await hostPackage.sharePortal()
+      const hostEditor = await hostEnv.workspace.open(path.join(temp.path(), 'a.md'))
+      const hostEditorProxy = portal.activeEditorProxyForSiteId(1)
+      const hostEditorURI = `atom://teletype/portal/${portal.id}/editor/${hostEditorProxy.id}`
+      hostEditor.setText('some text')
+
+      await hostEnv.workspace.open(path.join(temp.path(), 'b.txt'))
+
+      guestPackage.joinPortal(portal.id)
+      await condition(() => getRemotePaneItems(guestEnv).length === 1)
+
+      const guestEditor = await guestEnv.workspace.open(hostEditorURI)
+      assert(guestEditor.getTitle().endsWith('a.md'))
+      assert.equal(guestEditor.getURI(), hostEditorURI)
+      assert.equal(guestEditor.getText(), 'some text')
+
+      guestEditor.insertText('abc')
+      await condition(() => hostEditor.getText() === guestEditor.getText())
+    })
+
+    test('opening URIs for editors that do not exist in the portal', async () => {
+      const hostEnv = buildAtomEnvironment()
+      const hostPackage = await buildPackage(hostEnv)
+      const guestEnv = buildAtomEnvironment()
+      const guestPackage = await buildPackage(guestEnv)
+
+      const portal = await hostPackage.sharePortal()
+      await guestPackage.joinPortal(portal.id)
+
+      const nonexistentEditorURI = `atom://teletype/portal/${portal.id}/editor/999`
+      assert.equal(await guestEnv.workspace.open(nonexistentEditorURI), null)
+    })
+
+    test('opening URIs when not signed in', async () => {
+      const hostEnv = buildAtomEnvironment()
+      const hostPackage = await buildPackage(hostEnv)
+      const guestEnv = buildAtomEnvironment()
+      const guestPackage = await buildPackage(guestEnv, {signIn: false}) // eslint-disable-line no-unused-vars
+
+      const portal = await hostPackage.sharePortal()
+      await hostEnv.workspace.open()
+      const hostEditorProxy = portal.activeEditorProxyForSiteId(1)
+      const hostEditorURI = `atom://teletype/portal/${portal.id}/editor/${hostEditorProxy.id}`
+      assert.equal(await guestEnv.workspace.open(hostEditorURI), null)
+    })
+
+    test('opening malformed URIs', async () => {
+      const hostEnv = buildAtomEnvironment()
+      const hostPackage = await buildPackage(hostEnv)
+      const guestEnv = buildAtomEnvironment()
+      const guestPackage = await buildPackage(guestEnv)
+
+      const portal = await hostPackage.sharePortal()
+      await guestPackage.joinPortal(portal.id)
+
+      assert.equal(await guestEnv.workspace.open('atom://teletype/'), null)
+      assert.equal(await guestEnv.workspace.open('atom://teletype///'), null)
+
+      await hostEnv.workspace.open()
+      const editorProxy = portal.activeEditorProxyForSiteId(1)
+      assert.equal(
+        await guestEnv.workspace.open(`atom://teletype/x/${portal.id}/y/${editorProxy.id}`),
+        null
+      )
+    })
+  })
+
   test('opening and closing multiple editors on the host', async function () {
     const hostEnv = buildAtomEnvironment()
     const hostPackage = await buildPackage(hostEnv)
@@ -116,8 +358,6 @@ suite('TeletypePackage', function () {
     const portalId = (await hostPackage.sharePortal()).id
 
     guestPackage.joinPortal(portalId)
-    const emptyPortalPaneItem = await getNextRemotePaneItemPromise(guestEnv)
-    assert(emptyPortalPaneItem instanceof EmptyPortalPaneItem)
 
     const hostEditor1 = await hostEnv.workspace.open()
     const guestEditor1 = await getNextActiveTextEditorPromise(guestEnv)
@@ -135,8 +375,7 @@ suite('TeletypePackage', function () {
     await condition(() => getPaneItems(guestEnv).length === 1)
 
     hostEditor2.destroy()
-    assert.equal(await getNextRemotePaneItemPromise(guestEnv), emptyPortalPaneItem)
-    assert.equal(getPaneItems(guestEnv).length, 1)
+    await condition(() => getPaneItems(guestEnv).length === 0)
 
     await hostEnv.workspace.open()
     const guestEditor3 = await getNextRemotePaneItemPromise(guestEnv)
@@ -295,7 +534,7 @@ suite('TeletypePackage', function () {
     assert(!env.workspace.element.classList.contains('teletype-Authenticated'))
   })
 
-  test('prompting for a portal ID when joining', async () => {
+  test('prompting for a portal URL when joining', async () => {
     const pack = await buildPackage(buildAtomEnvironment())
     await pack.consumeStatusBar(new FakeStatusBar())
 
@@ -355,11 +594,13 @@ suite('TeletypePackage', function () {
     assert(!isTransmitting(host1StatusBar))
 
     const host1Portal = await host1Package.sharePortal()
+    await host1Env.workspace.open()
     await condition(() => isTransmitting(host1StatusBar))
 
     const host2Env = buildAtomEnvironment()
     const host2Package = await buildPackage(host2Env)
     const host2Portal = await host2Package.sharePortal()
+    await host2Env.workspace.open()
 
     const guestEnv = buildAtomEnvironment()
     const guestPackage = await buildPackage(guestEnv)
@@ -372,9 +613,9 @@ suite('TeletypePackage', function () {
     await guestPackage.joinPortal(host2Portal.id)
     assert(isTransmitting(guestStatusBar))
 
-    assert.equal(guestEnv.workspace.getPaneItems().length, 2)
     await guestPackage.leavePortal()
     assert(isTransmitting(guestStatusBar))
+
     await guestPackage.leavePortal()
     await condition(() => !isTransmitting(guestStatusBar))
 
@@ -409,37 +650,6 @@ suite('TeletypePackage', function () {
       await guestPackage.leavePortal()
       await condition(() => getPaneItems(guestEnv).length === 0)
     })
-
-    test('via closing last remote editor', async () => {
-      const hostEnv = buildAtomEnvironment()
-      const hostPackage = await buildPackage(hostEnv)
-      const hostPortal = await hostPackage.sharePortal()
-      await hostEnv.workspace.open(path.join(temp.path(), 'some-file'))
-
-      const guestEnv = buildAtomEnvironment()
-      const guestPackage = await buildPackage(guestEnv)
-      const guestPortal = await guestPackage.joinPortal(hostPortal.id)
-
-      await condition(() => getRemotePaneItems(guestEnv).length === 1)
-      const guestEditor = guestEnv.workspace.getActivePaneItem()
-      assert(guestEditor instanceof TextEditor)
-      guestEnv.workspace.closeActivePaneItemOrEmptyPaneOrWindow()
-      assert(guestPortal.disposed)
-    })
-
-    test('via closing empty portal pane item', async () => {
-      const hostEnv = buildAtomEnvironment()
-      const hostPackage = await buildPackage(hostEnv)
-      const guestEnv = buildAtomEnvironment()
-      const guestPackage = await buildPackage(guestEnv)
-      const hostPortal = await hostPackage.sharePortal()
-      const guestPortal = await guestPackage.joinPortal(hostPortal.id)
-
-      const guestEditor = getRemotePaneItems(guestEnv)[0]
-      assert(guestEditor instanceof EmptyPortalPaneItem)
-      guestEnv.workspace.closeActivePaneItemOrEmptyPaneOrWindow()
-      assert(guestPortal.disposed)
-    })
   })
 
   test('host closing portal', async function () {
@@ -448,7 +658,9 @@ suite('TeletypePackage', function () {
     const guestEnv = buildAtomEnvironment()
     const guestPackage = await buildPackage(guestEnv)
     const hostPortal = await hostPackage.sharePortal()
+
     guestPackage.joinPortal(hostPortal.id)
+    await hostEnv.workspace.open()
     await condition(() => getRemotePaneItems(guestEnv).length === 1)
 
     hostPackage.closeHostPortal()
@@ -461,7 +673,9 @@ suite('TeletypePackage', function () {
     const hostPortal = await hostPackage.sharePortal()
     const guestEnv = buildAtomEnvironment()
     const guestPackage = await buildPackage(guestEnv)
+
     guestPackage.joinPortal(hostPortal.id)
+    await hostEnv.workspace.open()
     await condition(() => getRemotePaneItems(guestEnv).length === 1)
 
     hostPortal.peerPool.disconnect()
@@ -963,6 +1177,64 @@ suite('TeletypePackage', function () {
     }
   })
 
+  suite('services', () => {
+    test('getRemoteEditors()', async () => {
+      testServer.identityProvider.setIdentitiesByToken({
+        'token-1': {login: 'user-1'},
+        'token-2': {login: 'user-2'}
+      })
+
+      const host1Env = buildAtomEnvironment()
+      const host1Package = await buildPackage(host1Env, {signIn: false})
+      await host1Package.credentialCache.set('oauth-token', 'token-1')
+      await host1Package.signInUsingSavedToken()
+
+      const host1EditorA = await host1Env.workspace.open(path.join(temp.path(), 'a')) // eslint-disable-line no-unused-vars
+      const host1Portal = await host1Package.sharePortal()
+      const host1EditorB = await host1Env.workspace.open(path.join(temp.path(), 'b'))
+
+      const host2Env = buildAtomEnvironment()
+      const host2Package = await buildPackage(host2Env, {signIn: false})
+      await host2Package.credentialCache.set('oauth-token', 'token-2')
+      await host2Package.signInUsingSavedToken()
+
+      const host2EditorC = await host2Env.workspace.open(path.join(temp.path(), 'c')) // eslint-disable-line no-unused-vars
+      host2EditorC.setText('some text')
+      const host2Portal = await host2Package.sharePortal()
+      const host2EditorD = await host2Env.workspace.open(path.join(temp.path(), 'd')) // eslint-disable-line no-unused-vars
+      // Create multiple editors for a single buffer (e.g. split panes), ensuring only one of them is returned.
+      const host2EditorDCopy = await host2Env.workspace.open(host2EditorD.copy()) // eslint-disable-line no-unused-vars
+
+      const guestEnv = buildAtomEnvironment()
+      const guestPackage = await buildPackage(guestEnv)
+      const guestService = guestPackage.provideTeletype()
+      await guestPackage.joinPortal(host1Portal.id)
+      await guestPackage.joinPortal(host2Portal.id)
+
+      host1EditorB.destroy()
+      await condition(async () => (await guestService.getRemoteEditors()).length === 3)
+      const remoteEditors = await guestService.getRemoteEditors()
+
+      assert.equal(remoteEditors[0].hostGitHubUsername, 'user-1')
+      assert.equal(remoteEditors[0].path, host1EditorA.getPath())
+
+      assert.equal(remoteEditors[1].hostGitHubUsername, 'user-2')
+      assert.equal(remoteEditors[1].path, host2EditorC.getPath())
+
+      assert.equal(remoteEditors[2].hostGitHubUsername, 'user-2')
+      assert.equal(remoteEditors[2].path, host2EditorD.getPath())
+
+      const guestEditorC = await guestEnv.workspace.open(remoteEditors[1].uri)
+      assert(guestEditorC.isRemote)
+      assert.equal(guestEditorC.getTitle(), '@user-2: c')
+      assert.equal(guestEditorC.getURI(), remoteEditors[1].uri)
+      assert.equal(guestEditorC.getText(), 'some text')
+
+      guestEditorC.setText('modified text')
+      await condition(() => host2EditorC.getText() === 'modified text')
+    })
+  })
+
   test('adding and removing workspace element classes when sharing a portal', async () => {
     const hostEnv = buildAtomEnvironment()
     const hostPackage = await buildPackage(hostEnv)
@@ -1048,6 +1320,25 @@ suite('TeletypePackage', function () {
     assert(description.includes('some error'))
   })
 
+  function buildAtomEnvironment (options = {}) {
+    const env = atomEnvironments.buildAtomEnvironment()
+
+    const {configSchema} = require('../package.json')
+    for (const key in configSchema) {
+      const setting = configSchema[key]
+      env.config.set('teletype.' + key, setting.default)
+    }
+
+    if (options.askBeforeJoiningPortalViaExternalApp !== undefined) {
+      env.config.set(
+        'teletype.askBeforeJoiningPortalViaExternalApp',
+        options.askBeforeJoiningPortalViaExternalApp
+      )
+    }
+
+    return env
+  }
+
   let nextTokenId = 0
   async function buildPackage (env, options = {}) {
     const credentialCache = new FakeCredentialCache()
@@ -1060,9 +1351,12 @@ suite('TeletypePackage', function () {
       tooltipManager: env.tooltips,
       clipboard: new FakeClipboard(),
       getAtomVersion: function () { return 'x.y.z' },
+      peerConnectionTimeout: options.peerConnectionTimeout,
       tetherDisconnectWindow: 300,
+      config: env.config,
       credentialCache
     })
+    pack.registerRemoteEditorOpener()
 
     if (options.signIn == null || options.signIn) {
       await credentialCache.set('oauth-token', 'token-' + nextTokenId++)

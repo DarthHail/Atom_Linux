@@ -1,8 +1,8 @@
 /* global ResizeObserver */
 
 const path = require('path')
-const {Range, Emitter, Disposable, CompositeDisposable} = require('atom')
-const normalizeURI = require('./normalize-uri')
+const {Range, Emitter, Disposable, CompositeDisposable, TextBuffer} = require('atom')
+const {getEditorURI} = require('./uri-helpers')
 const {FollowState} = require('@atom/teletype-client')
 
 module.exports =
@@ -32,17 +32,12 @@ class EditorBinding {
 
     this.emitter.emit('did-dispose')
     this.emitter.dispose()
-
-    if (!this.isHost) this.editor.destroy()
   }
 
   setEditorProxy (editorProxy) {
     this.editorProxy = editorProxy
-    if (this.isHost) {
-      this.editor.onDidDestroy(() => this.editorProxy.dispose())
-    } else {
+    if (!this.isHost) {
       this.monkeyPatchEditorMethods(this.editor, this.editorProxy)
-      this.editor.onDidDestroy(() => this.dispose())
     }
 
     this.localCursorLayerDecoration = this.editor.decorateMarkerLayer(
@@ -62,23 +57,23 @@ class EditorBinding {
   }
 
   monkeyPatchEditorMethods (editor, editorProxy) {
-    const buffer = editor.getBuffer()
-    const bufferProxy = editorProxy.bufferProxy
+    const remoteBuffer = editor.getBuffer()
+    const originalRemoteBufferGetPath = TextBuffer.prototype.getPath.bind(remoteBuffer)
+    const {bufferProxy} = editorProxy
     const hostIdentity = this.portal.getSiteIdentity(1)
-    const uriPrefix = hostIdentity ? `@${hostIdentity.login}` : 'remote'
+    const prefix = hostIdentity ? `@${hostIdentity.login}` : 'remote'
 
-    const bufferURI = normalizeURI(bufferProxy.uri)
-    editor.getTitle = () => `${uriPrefix}: ${path.basename(bufferURI)}`
-    editor.getURI = () => ''
+    editor.getTitle = () => `${prefix}: ${path.basename(originalRemoteBufferGetPath())}`
+    editor.getURI = () => getEditorURI(this.portal.id, editorProxy.id)
     editor.copy = () => null
     editor.serialize = () => null
     editor.isRemote = true
 
-    let remoteEditorCountForBuffer = buffer.remoteEditorCount || 0
-    buffer.remoteEditorCount = ++remoteEditorCountForBuffer
-    buffer.getPath = () => `${uriPrefix}:${bufferURI}`
-    buffer.save = () => { bufferProxy.requestSave() }
-    buffer.isModified = () => false
+    let remoteEditorCountForBuffer = remoteBuffer.remoteEditorCount || 0
+    remoteBuffer.remoteEditorCount = ++remoteEditorCountForBuffer
+    remoteBuffer.getPath = () => `${prefix}:${originalRemoteBufferGetPath()}`
+    remoteBuffer.save = () => { bufferProxy.requestSave() }
+    remoteBuffer.isModified = () => false
 
     editor.element.classList.add('teletype-RemotePaneItem')
   }

@@ -1,9 +1,9 @@
-const path = require('path')
 const {CompositeDisposable, Emitter} = require('atom')
 const {FollowState} = require('@atom/teletype-client')
 const BufferBinding = require('./buffer-binding')
 const EditorBinding = require('./editor-binding')
-const SitePositionsController = require('./site-positions-controller')
+const SitePositionsComponent = require('./site-positions-component')
+const {getPortalURI} = require('./uri-helpers')
 
 module.exports =
 class HostPortalBinding {
@@ -25,12 +25,13 @@ class HostPortalBinding {
       this.portal = await this.client.createPortal()
       if (!this.portal) return false
 
-      this.sitePositionsController = new SitePositionsController({portal: this.portal, workspace: this.workspace})
+      this.uri = getPortalURI(this.portal.id)
+      this.sitePositionsComponent = new SitePositionsComponent({portal: this.portal, workspace: this.workspace})
 
       this.portal.setDelegate(this)
       this.disposables.add(
-        this.workspace.observeActiveTextEditor(this.didChangeActiveTextEditor.bind(this)),
-        this.workspace.onDidDestroyPaneItem(this.didDestroyPaneItem.bind(this))
+        this.workspace.observeTextEditors(this.didAddTextEditor.bind(this)),
+        this.workspace.observeActiveTextEditor(this.didChangeActiveTextEditor.bind(this))
       )
 
       this.workspace.getElement().classList.add('teletype-Host')
@@ -46,7 +47,7 @@ class HostPortalBinding {
 
   dispose () {
     this.workspace.getElement().classList.remove('teletype-Host')
-    this.sitePositionsController.destroy()
+    this.sitePositionsComponent.destroy()
     this.disposables.dispose()
     this.didDispose()
   }
@@ -75,15 +76,15 @@ class HostPortalBinding {
     if (editor && !editor.isRemote) {
       const editorProxy = this.findOrCreateEditorProxyForEditor(editor)
       this.portal.activateEditorProxy(editorProxy)
-      this.sitePositionsController.show(editor.element)
+      this.sitePositionsComponent.show(editor.element)
     } else {
       this.portal.activateEditorProxy(null)
-      this.sitePositionsController.hide()
+      this.sitePositionsComponent.hide()
     }
   }
 
   updateActivePositions (positionsBySiteId) {
-    this.sitePositionsController.updateActivePositions(positionsBySiteId)
+    this.sitePositionsComponent.update({positionsBySiteId})
   }
 
   updateTether (followState, editorProxy, position) {
@@ -108,11 +109,8 @@ class HostPortalBinding {
     }
   }
 
-  didDestroyPaneItem ({item}) {
-    const editorBinding = this.editorBindingsByEditor.get(item)
-    if (editorBinding) {
-      this.portal.removeEditorProxy(editorBinding.editorProxy)
-    }
+  didAddTextEditor (editor) {
+    if (!editor.isRemote) this.findOrCreateEditorProxyForEditor(editor)
   }
 
   findOrCreateEditorProxyForEditor (editor) {
@@ -128,11 +126,12 @@ class HostPortalBinding {
 
       this.editorBindingsByEditor.set(editor, editorBinding)
       this.editorBindingsByEditorProxy.set(editorProxy, editorBinding)
+
+      const didDestroyEditorSubscription = editor.onDidDestroy(() => editorProxy.dispose())
       editorBinding.onDidDispose(() => {
+        didDestroyEditorSubscription.dispose()
         this.editorBindingsByEditorProxy.delete(editorProxy)
       })
-
-      this.sitePositionsController.addEditorBinding(editorBinding)
 
       return editorProxy
     }
@@ -145,7 +144,7 @@ class HostPortalBinding {
     } else {
       bufferBinding = new BufferBinding({buffer, isHost: true})
       const bufferProxy = this.portal.createBufferProxy({
-        uri: this.getBufferProxyURI(buffer),
+        uri: bufferBinding.getBufferProxyURI(),
         history: buffer.getHistory()
       })
       bufferBinding.setBufferProxy(bufferProxy)
@@ -154,18 +153,6 @@ class HostPortalBinding {
       this.bufferBindingsByBuffer.set(buffer, bufferBinding)
 
       return bufferProxy
-    }
-  }
-
-  getBufferProxyURI (buffer) {
-    if (!buffer.getPath()) return 'untitled'
-
-    const [projectPath, relativePath] = this.workspace.project.relativizePath(buffer.getPath())
-    if (projectPath) {
-      const projectName = path.basename(projectPath)
-      return path.join(projectName, relativePath)
-    } else {
-      return relativePath
     }
   }
 }

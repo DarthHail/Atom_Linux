@@ -4,16 +4,21 @@ const PortalBindingManager = require('./portal-binding-manager')
 const PortalStatusBarIndicator = require('./portal-status-bar-indicator')
 const AuthenticationProvider = require('./authentication-provider')
 const CredentialCache = require('./credential-cache')
+const TeletypeService = require('./teletype-service')
+const {findPortalId} = require('./portal-id-helpers')
+const JoinViaExternalAppDialog = require('./join-via-external-app-dialog')
 
 module.exports =
 class TeletypePackage {
   constructor (options) {
     const {
-      baseURL, clipboard, commandRegistry, credentialCache, getAtomVersion,
-      notificationManager, packageManager, pubSubGateway, pusherKey,
-      pusherOptions, tetherDisconnectWindow, tooltipManager, workspace
+      baseURL, config, clipboard, commandRegistry, credentialCache, getAtomVersion,
+      notificationManager, packageManager, peerConnectionTimeout, pubSubGateway,
+      pusherKey, pusherOptions, tetherDisconnectWindow, tooltipManager,
+      workspace
     } = options
 
+    this.config = config
     this.workspace = workspace
     this.notificationManager = notificationManager
     this.packageManager = packageManager
@@ -25,6 +30,7 @@ class TeletypePackage {
     this.pusherOptions = pusherOptions
     this.baseURL = baseURL
     this.getAtomVersion = getAtomVersion
+    this.peerConnectionTimeout = peerConnectionTimeout
     this.tetherDisconnectWindow = tetherDisconnectWindow
     this.credentialCache = credentialCache || new CredentialCache()
     this.client = new TeletypeClient({
@@ -32,17 +38,18 @@ class TeletypePackage {
       pusherOptions: this.pusherOptions,
       baseURL: this.baseURL,
       pubSubGateway: this.pubSubGateway,
+      connectionTimeout: this.peerConnectionTimeout,
       tetherDisconnectWindow: this.tetherDisconnectWindow
     })
     this.client.onConnectionError(this.handleConnectionError.bind(this))
     this.portalBindingManagerPromise = null
+    this.joinViaExternalAppDialog = new JoinViaExternalAppDialog({config, commandRegistry, workspace})
+    this.subscriptions = new CompositeDisposable()
   }
 
   activate () {
     console.log('teletype: Using pusher key:', this.pusherKey)
     console.log('teletype: Using base URL:', this.baseURL)
-
-    this.subscriptions = new CompositeDisposable()
 
     this.subscriptions.add(this.commandRegistry.add('atom-workspace.teletype-Authenticated', {
       'teletype:sign-out': () => this.signOut()
@@ -57,23 +64,50 @@ class TeletypePackage {
       'teletype:leave-portal': () => this.leavePortal()
     }))
     this.subscriptions.add(this.commandRegistry.add('atom-workspace.teletype-Host', {
+      'teletype:copy-portal-url': () => this.copyHostPortalURI()
+    }))
+    this.subscriptions.add(this.commandRegistry.add('atom-workspace.teletype-Host', {
       'teletype:close-portal': () => this.closeHostPortal()
     }))
 
     // Initiate sign-in, which will continue asynchronously, since we don't want
     // to block here.
     this.signInUsingSavedToken()
+    this.registerRemoteEditorOpener()
   }
 
   async deactivate () {
     this.initializationError = null
 
-    if (this.subscriptions) this.subscriptions.dispose() // Package is not activated in specs
+    this.subscriptions.dispose()
+    this.subscriptions = new CompositeDisposable()
+
     if (this.portalStatusBarIndicator) this.portalStatusBarIndicator.destroy()
 
     if (this.portalBindingManagerPromise) {
       const manager = await this.portalBindingManagerPromise
       await manager.dispose()
+    }
+  }
+
+  async handleURI (parsedURI, rawURI) {
+    const portalId = findPortalId(parsedURI.pathname) || rawURI
+
+    if (this.config.get('teletype.askBeforeJoiningPortalViaExternalApp')) {
+      const {EXIT_STATUS} = JoinViaExternalAppDialog
+
+      const status = await this.joinViaExternalAppDialog.show(rawURI)
+      switch (status) {
+        case EXIT_STATUS.CONFIRM_ONCE:
+          return this.joinPortal(portalId)
+        case EXIT_STATUS.CONFIRM_ALWAYS:
+          this.config.set('teletype.askBeforeJoiningPortalViaExternalApp', false)
+          return this.joinPortal(portalId)
+        default:
+          break
+      }
+    } else {
+      return this.joinPortal(portalId)
     }
   }
 
@@ -109,12 +143,22 @@ class TeletypePackage {
     hostPortalBinding.close()
   }
 
+  async copyHostPortalURI () {
+    const manager = await this.getPortalBindingManager()
+    const hostPortalBinding = await manager.getHostPortalBinding()
+    atom.clipboard.write(hostPortalBinding.uri)
+  }
+
   async leavePortal () {
     this.showPopover()
 
     const manager = await this.getPortalBindingManager()
     const guestPortalBinding = await manager.getActiveGuestPortalBinding()
     guestPortalBinding.leave()
+  }
+
+  provideTeletype () {
+    return new TeletypeService({teletypePackage: this})
   }
 
   async consumeStatusBar (statusBar) {
@@ -138,6 +182,23 @@ class TeletypePackage {
     })
 
     this.portalStatusBarIndicator.attach()
+  }
+
+  registerRemoteEditorOpener () {
+    this.subscriptions.add(this.workspace.addOpener((uri) => {
+      if (uri.startsWith('atom://teletype/')) {
+        return this.getRemoteEditorForURI(uri)
+      } else {
+        return null
+      }
+    }))
+  }
+
+  async getRemoteEditorForURI (uri) {
+    const portalBindingManager = await this.getPortalBindingManager()
+    if (portalBindingManager && await this.isSignedIn()) {
+      return portalBindingManager.getRemoteEditorForURI(uri)
+    }
   }
 
   async signInUsingSavedToken () {

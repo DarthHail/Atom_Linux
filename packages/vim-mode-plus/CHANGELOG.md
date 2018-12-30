@@ -1,3 +1,77 @@
+# 1.34.0:
+- Diff: [here](https://github.com/t9md/atom-vim-mode-plus/compare/v1.33.0...v1.34.0)
+- Improve: `ChangeCase` family operators(`~`, `g u` and `g U`) now target non-ascii chars. #1085 by @zensoup
+  - Ex: `g U` can upper-case `αρρ` to `ΑΡΡ`.
+
+# 1.33.0:
+- Diff: [here](https://github.com/t9md/atom-vim-mode-plus/compare/v1.32.1...v1.33.0)
+- New: BlockComment text-object. #1082
+  - `inner-block-comment`(`i *`)
+    - Select from first non-white-space-char to last non-white-space-char within block comment.
+  - `a-block-comment`(`a *`)
+    - Select whole block-comment.
+
+# 1.32.1:
+- Diff: [here](https://github.com/t9md/atom-vim-mode-plus/compare/v1.32.0...v1.32.1)
+- Improve: `vim-mode-plus:clip-debug-info` no longer report diff for default value with `type:array` config.
+
+# 1.32.0: Big improvement for hardTab editor(`j`, `k` and `visual-blockwise-mode`)!!
+- Diff: [here](https://github.com/t9md/atom-vim-mode-plus/compare/v1.31.1...v1.32.0)
+- Improve: Now BlockwiseSelection properly select block in hardTab using editor #1052.
+  - Calculate accurate column by expanidng/de-expanding hardTab of selected row.
+- Improve: `j`, `k` motions now handle hardTab appropriately when moving up and down.
+  - Calculate accurate column by expanidng/de-expanding hardTab of selected row.
+- Fix: Apply workaround to broken paragraph motion(`{`, `}`)
+  - Which was broken from Atom v1.25.0 because of atom-core's bug. #1047.
+- Tweak: `move-to-(next/previous)-fold-(start/end)-with-same-indent` command.
+  - Previously it used to use indent level of cursor's row.
+  - Now it use indent level of closest fold cursor's row is contained.
+  - New: Add following commands for consistency
+    - `move-to-previous-fold-end-with-same-indent`, `move-to-next-fold-end-with-same-indent`
+
+# 1.31.1:
+- Diff: [here](https://github.com/t9md/atom-vim-mode-plus/compare/v1.31.0...v1.31.1)
+- Fix: Now properly disable `readOnly` state on package deactivation.
+  - Condition
+    - When user enabled `autoDisableInputMethodWhenLeavingInsertMode`
+    - Then deactivate `vim-mode-plus` package.
+  - editor's hiddenInput remain `readOnly = true` which make editor un-editable.
+
+# 1.31.0:
+- Diff: [here](https://github.com/t9md/atom-vim-mode-plus/compare/v1.30.1...v1.31.0)
+- New: Introduce new configuration to affect **word** finding in motion and text-object.
+  - Purpose
+    - When finding word in motions(`w`, `e` etc) and text-objet(`i w` etc), vmp use nonWordCharacters which vary from grammars.
+    - Some grammar treat `-` as non-word, but some are not, this inconsistency is a bit confusing.
+    - So user can avoid this inconsistencies by enabling this new setting.
+  - `useLanguageIndependentNonWordCharacters`: Enable this to always use same `nonWordCharacters` regardless of grammar.
+  - `languageIndependentNonWordCharacters`: This value is used only when `useLanguageIndependentNonWordCharacters` was enabled.
+    - Default value is borrowed from `DEFAULT_NON_WORD_CHARACTERS` in `text-editor.js`.
+
+# 1.30.1:
+- Diff: [here](https://github.com/t9md/atom-vim-mode-plus/compare/v1.30.0...v1.30.1)
+- Improve: `deMaximize` maximized state also on `atom.workspace.onDidAddPaneItem` timing.
+
+# 1.30.0:
+- Diff: [here](https://github.com/t9md/atom-vim-mode-plus/compare/v1.29.0...v1.30.0)
+- New, Experiment: `autoDisableInputMethodWhenLeavingInsertMode` config to auto-disable IME when leaving `insert-mode`.
+  - Default `false`.
+  - Once this feature was brought by PR#151 then reverted because of unfixable BUG.
+  - Now retrying to bring same feature in different approach
+    - setting `readOnly` attribute to `false` than setting `input.type = "password"`.
+  - Credit: Borrowed whole idea from @frapples's `vim-mode-plus-patch-switch-ime` package. Thanks @frapples!!
+
+# 1.29.0:
+- Diff: [here](https://github.com/t9md/atom-vim-mode-plus/compare/v1.28.0...v1.29.0)
+- New: `hideCommandsFromCommandPalette` config which hide commands from command-palette when set to `true` #1033, #1034
+  - Default `false` to to make it compatible with older version.
+  - This feature is once implemented in #943 but reverted before releasing it. Because I find no big perf gain by this feature.
+  - But this time I changed mind, reducing noise when searching palette is good idea.
+- New, Support: Add support helper command. #1037
+  - To let user paste clipped info when they open issue.
+  - `vim-mode-plus:clip-debug-info`, `vim-mode-plus:clip-debug-info-with-package-info`
+  - These command write collected debug info to clipboard with the form of foldable(by `detail` tag) to not mess issue board.
+
 # 1.28.1:
 - Diff: [here](https://github.com/t9md/atom-vim-mode-plus/compare/v1.28.0...v1.28.1)
 - FIX: Add `altgraph` using version of keymap to to workaround atom-keymap issue @lydell #661, #1031

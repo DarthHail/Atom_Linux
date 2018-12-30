@@ -27,11 +27,18 @@ module.exports = {
         'vim-mode-plus:move-pane-to-very-top': () => this.paneUtils.movePaneToVery('top'),
         'vim-mode-plus:move-pane-to-very-bottom': () => this.paneUtils.movePaneToVery('bottom'),
         'vim-mode-plus:move-pane-to-very-left': () => this.paneUtils.movePaneToVery('left'),
-        'vim-mode-plus:move-pane-to-very-right': () => this.paneUtils.movePaneToVery('right')
+        'vim-mode-plus:move-pane-to-very-right': () => this.paneUtils.movePaneToVery('right'),
+        'vim-mode-plus:clip-debug-info': () => this.debugInfo.clipDebugInfo(),
+        'vim-mode-plus:clip-debug-info-with-package-info': () => this.debugInfo.clipDebugInfo(true)
       }),
       this.registerEditorCommands(),
       this.registerVimStateCommands(),
       atom.workspace.onDidChangeActivePane(() => this.demaximizePane()),
+      atom.workspace.onDidAddPaneItem(event => {
+        if (event.pane !== atom.workspace.getActivePane()) {
+          this.demaximizePane()
+        }
+      }),
       atom.workspace.observeTextEditors(editor => {
         if (!editor.isMini()) {
           this.emitter.emit('did-add-vim-state', new VimState(editor, this.statusBarManager))
@@ -121,9 +128,12 @@ module.exports = {
 
   registerEditorCommands () {
     const commands = {}
-    const dispatcher = VimState.getDispatcher()
+    const spec = {
+      hiddenInCommandPalette: settings.get('hideCommandsFromCommandPalette'),
+      didDispatch: VimState.getDispatcher()
+    }
     require('./json/command-table.json').forEach(name => {
-      commands[name] = dispatcher
+      commands[name] = spec
     })
     return atom.commands.add('atom-text-editor', commands)
   },
@@ -195,6 +205,7 @@ module.exports = {
   get statusBarManager () { return this.__statusBarManager || (this.__statusBarManager = require('./status-bar-manager')) }, // prettier-ignore
   get demoModeSupport () { return this.__demoModeSupport || (this.__demoModeSupport = require('./demo-mode-support')) }, // prettier-ignore
   get paneUtils () { return this.__paneUtils || (this.__paneUtils = require('./pane-utils')) }, // prettier-ignore
+  get debugInfo () { return this.__debugInfo || (this.__debugInfo = require('./debug-info')) }, // prettier-ignore
   get globalState () { return this.__globalState || (this.__globalState = require('./global-state')) }, // prettier-ignore
 
   // Service API

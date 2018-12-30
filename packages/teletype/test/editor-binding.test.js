@@ -13,6 +13,8 @@ const {
   setEditorScrollLeftInChars
 } = require('./helpers/editor-helpers')
 const {FollowState} = require('@atom/teletype-client')
+const FakeBufferProxy = require('./helpers/fake-buffer-proxy')
+const BufferBinding = require('../lib/buffer-binding')
 
 suite('EditorBinding', function () {
   if (process.env.CI) this.timeout(process.env.TEST_TIMEOUT_IN_MS)
@@ -301,8 +303,6 @@ suite('EditorBinding', function () {
     })
   })
 
-  // Refs: https://github.com/atom/text-buffer/pull/210
-  // TODO: Remove this workaround when the bug is fixed on Atom stable.
   test('does not relay selections that are already destroyed when their creation event is emitted', () => {
     const editor = new TextEditor({buffer: new TextBuffer(SAMPLE_TEXT)})
     const binding = new EditorBinding({editor, portal: new FakePortal()})
@@ -320,49 +320,17 @@ suite('EditorBinding', function () {
     })
   })
 
-  suite('destroying the editor', () => {
-    test('on the host, disposes the underlying editor proxy', () => {
-      const editor = new TextEditor()
-      const binding = new EditorBinding({editor, isHost: true, portal: new FakePortal()})
-      const editorProxy = new FakeEditorProxy(binding)
-      binding.setEditorProxy(editorProxy)
-
-      editor.destroy()
-      assert(editorProxy.disposed)
-    })
-
-    test('on guests, disposes the editor binding', () => {
-      const editor = new TextEditor()
-      const binding = new EditorBinding({editor, isHost: false, portal: new FakePortal()})
-      const editorProxy = new FakeEditorProxy(binding)
-      binding.setEditorProxy(editorProxy)
-
-      editor.destroy()
-      assert(binding.disposed)
-      assert(!editorProxy.disposed)
-    })
-  })
-
-  test('destroys the editor when disposing the binding on guests', () => {
-    const editor = new TextEditor()
-    const binding = new EditorBinding({editor, isHost: false, portal: new FakePortal()})
-    const editorProxy = new FakeEditorProxy(binding)
-    binding.setEditorProxy(editorProxy)
-
-    binding.dispose()
-    assert(editor.isDestroyed())
-  })
-
   suite('guest editor binding', () => {
     test('overrides the editor methods when setting the proxy', () => {
       const buffer = new TextBuffer({text: SAMPLE_TEXT})
       const editor = new TextEditor({buffer})
 
-      const binding = new EditorBinding({editor, portal: new FakePortal(), isHost: false})
-      const editorProxy = new FakeEditorProxy(binding)
-      binding.setEditorProxy(editorProxy)
+      const editorBinding = new EditorBinding({editor, portal: new FakePortal(), isHost: false})
+      const editorProxy = new FakeEditorProxy(editorBinding)
+      const bufferBinding = new BufferBinding({buffer})
+      bufferBinding.setBufferProxy(editorProxy.bufferProxy)
+      editorBinding.setEditorProxy(editorProxy)
       assert.equal(editor.getTitle(), '@site-1: fake-buffer-proxy-uri')
-      assert.equal(editor.getURI(), '')
       assert.equal(editor.copy(), null)
       assert.equal(editor.serialize(), null)
       assert.equal(buffer.getPath(), '@site-1:fake-buffer-proxy-uri')
@@ -494,13 +462,7 @@ suite('EditorBinding', function () {
 class FakeEditorProxy {
   constructor (delegate, {siteId} = {}) {
     this.delegate = delegate
-    this.bufferProxy = {
-      uri: 'fake-buffer-proxy-uri',
-      saveRequestCount: 0,
-      requestSave () {
-        this.saveRequestCount++
-      }
-    }
+    this.bufferProxy = new FakeBufferProxy({uri: 'fake-buffer-proxy-uri'})
     this.selections = {}
     this.siteId = (siteId == null) ? 1 : siteId
     this.disposed = false

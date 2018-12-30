@@ -283,6 +283,15 @@ module.exports = new Settings('vim-mode-plus', {
     description:
       '[Can]: `I p`, `A p` to insert at start or end of `preset-occurrence` in paragraph(`p`).<br>`I` and `A` is operator which take target, you can combine it with any target like `I f`(`a-function`), `A z`(`a-fold`).<br>[Caution]: `I` and `A` behaves as operator as long as editor has `preset-occurrence`, even if there is no VISIBLE `preset-occurrence` in screen. You might want to `escape` to clear preset-occurrences on editor to make `I` and `A` behave normaly gain.<br>[Conflicts]: You cannot use normal `I` and `A` when `preset-occurrence` marker is exists.'
   },
+  hideCommandsFromCommandPalette: {
+    default: false,
+    description:
+      'Hide most commands(such as `j`(`vim-mode-plus:move-down`)) from command-palette. Require restart to make change take effect.'
+  },
+  autoDisableInputMethodWhenLeavingInsertMode: {
+    default: false,
+    description: '[Experimental] Automatically disable input method when leaving insert-mode'
+  },
   setCursorToStartOfChangeOnUndoRedo: true,
   setCursorToStartOfChangeOnUndoRedoStrategy: {
     default: 'smart',
@@ -311,6 +320,16 @@ module.exports = new Settings('vim-mode-plus', {
     description: 'Escape insert-mode on tab switch, pane switch'
   },
   wrapLeftRightMotion: false,
+  useLanguageIndependentNonWordCharacters: {
+    default: false,
+    description:
+      'Non word characters is used to detect **word** boundary which is normally based on current language mode(or grammar).<br>If you want to use **static** non word chars enable this.'
+  },
+  // Default value is copied from `DEFAULT_NON_WORD_CHARACTERS` in `text-editor.js`
+  languageIndependentNonWordCharacters: {
+    default: '/\\()"\':,.;<>~!@#$%^&*|+=[]{}`?-…',
+    description: 'Used only when `useLanguageIndependentNonWordCharacters` was enabled'
+  },
   numberRegex: {
     default: '-?[0-9]+',
     description:

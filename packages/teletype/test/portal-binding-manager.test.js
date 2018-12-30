@@ -65,6 +65,19 @@ suite('PortalBindingManager', () => {
       manager.client.resolveLastJoinPortalPromise(buildPortal())
       assert(await portalBinding1Promise2)
     })
+
+    suite('getGuestPortalBindings', () => {
+      test('excludes portals that could not be joined', async () => {
+        const manager = buildPortalBindingManager()
+
+        manager.createGuestPortalBinding('1')
+        manager.client.resolveLastJoinPortalPromise(null)
+        const portal2BindingPromise = manager.createGuestPortalBinding('2')
+        manager.client.resolveLastJoinPortalPromise(buildPortal())
+
+        assert.deepEqual(await manager.getGuestPortalBindings(), [await portal2BindingPromise])
+      })
+    })
   })
 
   test('adding and removing classes from the workspace element', async () => {
@@ -103,12 +116,14 @@ function buildPortalBindingManager () {
   return new PortalBindingManager({client, workspace, notificationManager})
 }
 
+let nextPortalId = 1
 let nextIdentityId = 1
-function buildPortal () {
+function buildPortal ({id, login} = {}) {
   return {
+    id: id != null ? id : (nextPortalId++).toString(),
     activateEditorProxy () {},
     getSiteIdentity () {
-      return {login: 'identity-' + nextIdentityId++}
+      return {login: login || 'identity-' + nextIdentityId++}
     },
     dispose () {
       this.delegate.dispose()
