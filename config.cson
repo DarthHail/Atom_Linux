@@ -8,8 +8,10 @@
     atomicSoftTabs: false
     autoIndent: false
     autoIndentOnPaste: false
+    showIndentGuide: true
     showInvisibles: true
     softWrap: true
+    tabType: "soft"
   "exception-reporting":
     userId: "5bb2cd27-0d27-4e9a-a9f5-2e350fb052e0"
   welcome:
