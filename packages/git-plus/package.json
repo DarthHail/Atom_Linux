@@ -2,39 +2,39 @@
   "_args": [
     [
       {
-        "raw": "/tmp/d-1181129-5902-nu0ct6.e3egvte29/package.tgz",
+        "raw": "/tmp/d-11902-12096-1pltn23.ju6tju4n29/package.tgz",
         "scope": null,
         "escapedName": null,
         "name": null,
-        "rawSpec": "/tmp/d-1181129-5902-nu0ct6.e3egvte29/package.tgz",
-        "spec": "/tmp/d-1181129-5902-nu0ct6.e3egvte29/package.tgz",
+        "rawSpec": "/tmp/d-11902-12096-1pltn23.ju6tju4n29/package.tgz",
+        "spec": "/tmp/d-11902-12096-1pltn23.ju6tju4n29/package.tgz",
         "type": "local"
       },
-      "/tmp/apm-install-dir-1181129-5902-1896q2r.otktd9rudi"
+      "/tmp/apm-install-dir-11902-12096-hdol08.mlkt8adcxr"
     ]
   ],
-  "_from": "../d-1181129-5902-nu0ct6.e3egvte29/package.tgz",
+  "_from": "../d-11902-12096-1pltn23.ju6tju4n29/package.tgz",
   "_id": "git-plus@8.3.0",
   "_inCache": true,
   "_location": "/git-plus",
   "_phantomChildren": {},
   "_requested": {
-    "raw": "/tmp/d-1181129-5902-nu0ct6.e3egvte29/package.tgz",
+    "raw": "/tmp/d-11902-12096-1pltn23.ju6tju4n29/package.tgz",
     "scope": null,
     "escapedName": null,
     "name": null,
-    "rawSpec": "/tmp/d-1181129-5902-nu0ct6.e3egvte29/package.tgz",
-    "spec": "/tmp/d-1181129-5902-nu0ct6.e3egvte29/package.tgz",
+    "rawSpec": "/tmp/d-11902-12096-1pltn23.ju6tju4n29/package.tgz",
+    "spec": "/tmp/d-11902-12096-1pltn23.ju6tju4n29/package.tgz",
     "type": "local"
   },
   "_requiredBy": [
     "#USER"
   ],
-  "_resolved": "file:../d-1181129-5902-nu0ct6.e3egvte29/package.tgz",
+  "_resolved": "file:../d-11902-12096-1pltn23.ju6tju4n29/package.tgz",
   "_shasum": "5cb29d93e2146d817ed0aa5b3b5a5482a8e943b8",
   "_shrinkwrap": null,
-  "_spec": "/tmp/d-1181129-5902-nu0ct6.e3egvte29/package.tgz",
-  "_where": "/tmp/apm-install-dir-1181129-5902-1896q2r.otktd9rudi",
+  "_spec": "/tmp/d-11902-12096-1pltn23.ju6tju4n29/package.tgz",
+  "_where": "/tmp/apm-install-dir-11902-12096-hdol08.mlkt8adcxr",
   "atomTranspilers": [
     {
       "glob": "{lib,spec}/**/*.js",
