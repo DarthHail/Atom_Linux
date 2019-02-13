@@ -33,4 +33,6 @@
 
 # GitPlus
 '.workspace':
-  'ctrl-alt-a': 'git-plus:diff'
+  'ctrl-alt-1': 'git-plus:diff'
+
+  'ctrl-alt-2': 'git-plus:add-all'
