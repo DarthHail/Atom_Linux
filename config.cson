@@ -4,11 +4,12 @@
       "autocomplete-plus"
     ]
     telemetryConsent: "no"
+    uriHandlerRegistration: "always"
   editor:
     atomicSoftTabs: false
     autoIndent: false
     autoIndentOnPaste: false
-    fontSize: 15
+    fontSize: 18
     invisibles:
       tab: " "
     showIndentGuide: true
