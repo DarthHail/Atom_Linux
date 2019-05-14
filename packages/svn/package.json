@@ -1,0 +1,70 @@
+{
+  "_from": "https://www.atom.io/api/packages/svn/versions/0.0.14/tarball",
+  "_id": "svn@0.0.14",
+  "_inBundle": false,
+  "_integrity": "sha512-2zfnCoDiZCcZlLYoBgzuFEi4marj3GGWf9ckm+dsXZLbpvKtcutwirFq5Zz2QjTG+nPMRETNN8uLvLhBsunBZQ==",
+  "_location": "/svn",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "remote",
+    "raw": "https://www.atom.io/api/packages/svn/versions/0.0.14/tarball",
+    "rawSpec": "https://www.atom.io/api/packages/svn/versions/0.0.14/tarball",
+    "saveSpec": "https://www.atom.io/api/packages/svn/versions/0.0.14/tarball",
+    "fetchSpec": "https://www.atom.io/api/packages/svn/versions/0.0.14/tarball"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://www.atom.io/api/packages/svn/versions/0.0.14/tarball",
+  "_shasum": "feddfd45457f275ace0916fdb91404901dc09704",
+  "_spec": "https://www.atom.io/api/packages/svn/versions/0.0.14/tarball",
+  "_where": "C:\\Users\\mungerc\\AppData\\Local\\Temp\\apm-install-dir-119414-9364-1ctvn9i.mbyk",
+  "bugs": {
+    "url": "https://github.com/andischerer/atom-svn/issues"
+  },
+  "bundleDependencies": false,
+  "coffeelintConfig": {
+    "indentation": {
+      "level": "error",
+      "value": 2
+    },
+    "line_endings": {
+      "value": "unix",
+      "level": "error"
+    },
+    "max_line_length": {
+      "level": "ignore"
+    }
+  },
+  "dependencies": {
+    "event-kit": "2.0.0",
+    "jquery": "2.2.0",
+    "jsdifflib": "1.1.0"
+  },
+  "deprecated": false,
+  "description": "Marks lines/files in the editor gutter/treeview that have been added, edited, or deleted since the last commit.",
+  "engines": {
+    "atom": ">=0.200.0"
+  },
+  "homepage": "https://github.com/andischerer/atom-svn#readme",
+  "keywords": [
+    "svn",
+    "vcs"
+  ],
+  "license": "MIT",
+  "main": "./lib/svn",
+  "name": "svn",
+  "providedServices": {
+    "atom.repository-provider": {
+      "versions": {
+        "0.1.0": "getRepositoryProviderService"
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andischerer/atom-svn.git"
+  },
+  "version": "0.0.14"
+}
