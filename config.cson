@@ -9,7 +9,7 @@
     atomicSoftTabs: false
     autoIndent: false
     autoIndentOnPaste: false
-    fontSize: 18
+    fontSize: 20
     invisibles:
       tab: " "
     showIndentGuide: true
