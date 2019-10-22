@@ -12,13 +12,7 @@ installed, please follow the instructions [here](http://puppet-lint.com/).
 
 Basically, you should execute `gem install puppet-lint` or `bundle install puppet-lint`.
 
-### Compatibility
-
-__Since the 0.5.0 version this package is no longer compatible with old
-versions of puppet-lint__ because we are now using a custom log format with
-`%{line}` and `%{column}` placeholders. If you have an old version of Puppet-Lint
-installed, then please follow the instructions for the `puppet-lint` gem installation
-to ensure that you have the latest version of Puppet-Lint.
+The minimum supported version of `puppet-lint` is 2.0.0.
 
 ### Plugin installation
 

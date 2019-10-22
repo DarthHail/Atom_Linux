@@ -1,7 +1,9 @@
 'use babel';
 
 // eslint-disable-next-line import/no-extraneous-dependencies, import/extensions
-import { CompositeDisposable } from 'atom';
+import {
+  CompositeDisposable,
+} from 'atom';
 
 // Some internal variables
 let subscriptions;
@@ -25,14 +27,12 @@ export default {
 
     // Check if puppet-lint has support for the %{column} placeholder
     helpers.exec(executablePath, ['--help']).then((output) => {
-      const regexColumn = /%{column}/;
-
-      if (regexColumn.exec(output) === null) {
+      if (/no-140chars-check/.exec(output) === null) {
         atom.notifications.addError(
-          'You are using an old version of puppet-lint!',
+          'You are using an unsupported version of puppet-lint!',
           {
-            detail: 'Please upgrade your version of puppet-lint.\n' +
-              'Check the README for further information.',
+            detail: 'Please upgrade your version of puppet-lint to >= 2.0.0.\n'
+              + 'Check the README for further information.',
           },
         );
       }
@@ -57,10 +57,8 @@ export default {
         const filePath = activeEditor.getPath();
         const [projectPath, projectRelativeFilePath] = atom.project.relativizePath(filePath);
 
-        // With the custom format the puppet-int ouput looks like this:
-        // error mongodb::service not in autoload module layout 3 7
-        const regexLine = /^(warning|error)\s(.*)\s(\d+)\s(\d+)$/;
-        const args = ['--log-format', '%{kind} %{message} %{line} %{column}', '--error-level', errorLevel];
+        // Setup args
+        const args = ['--relative', '--json', '--error-level', errorLevel];
 
         const optionsMap = require('./flags.js');
 
@@ -76,29 +74,42 @@ export default {
 
         return helpers.exec(executablePath, args, { cwd: projectPath, ignoreExitCode: true })
           .then((output) => {
-            // If puppet-lint errors to stdout then redirect the message to stderr so it is caught
-            if (/puppet-lint:/.exec(output)) {
-              throw output;
-            }
             const toReturn = [];
 
+            // If puppet-lint errors to stdout then redirect the message to atom error notifications
+            if (/puppet-lint:/.exec(output)) {
+              atom.notifications.addError(
+                'Puppet-Lint errored due to the following reason(s):',
+                {
+                  detail: output,
+                },
+              );
+
+              // return early
+              return toReturn;
+            }
+
+            // Parse JSON output and immediately access zeroth element of redundant outer array
+            const info = JSON.parse(output)[0];
+
             // Check for proper warnings and errors from stdout
-            output.split(/\r?\n/).forEach((line) => {
-              const matches = regexLine.exec(line);
-              if (matches != null) {
-                const errLine = Number.parseInt(matches[3], 10) - 1;
-                const errCol = Number.parseInt(matches[4], 10) - 1;
+            if (info.length > 0) {
+              info.forEach((issue) => {
+                // bypass char line limit
+                const line = issue.line - 1;
+                const col = issue.column - 1;
 
                 toReturn.push({
-                  severity: matches[1],
-                  excerpt: matches[2],
+                  severity: issue.kind,
+                  excerpt: issue.message,
                   location: {
+                    // bug in atom-linter cannot use issue.path
                     file: filePath,
-                    position: helpers.generateRange(activeEditor, errLine, errCol),
+                    position: helpers.generateRange(activeEditor, line, col),
                   },
                 });
-              }
-            });
+              });
+            }
             return toReturn;
           });
       },

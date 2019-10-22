@@ -1,43 +1,29 @@
 {
-  "_args": [
-    [
-      {
-        "raw": "/tmp/d-118121-20820-r0vp8q.98vk6b6gvi/package.tgz",
-        "scope": null,
-        "escapedName": null,
-        "name": null,
-        "rawSpec": "/tmp/d-118121-20820-r0vp8q.98vk6b6gvi/package.tgz",
-        "spec": "/tmp/d-118121-20820-r0vp8q.98vk6b6gvi/package.tgz",
-        "type": "local"
-      },
-      "/tmp/apm-install-dir-118121-20820-sz7ebe.xr1igm0a4i"
-    ]
-  ],
-  "_from": "../d-118121-20820-r0vp8q.98vk6b6gvi/package.tgz",
-  "_id": "linter-puppet-lint@0.8.4",
-  "_inCache": true,
+  "_from": "https://www.atom.io/api/packages/linter-puppet-lint/versions/0.9.0/tarball",
+  "_id": "linter-puppet-lint@0.9.0",
+  "_inBundle": false,
+  "_integrity": "sha512-hBt+OCtViFzlZkEkyLtHWFMLaDxaFLHeEbSNdmEHGUs4Vl/5iiGcGY7BSFPKkd9gZCL0SdE8h9U+M6ZS5uangA==",
   "_location": "/linter-puppet-lint",
   "_phantomChildren": {},
   "_requested": {
-    "raw": "/tmp/d-118121-20820-r0vp8q.98vk6b6gvi/package.tgz",
-    "scope": null,
-    "escapedName": null,
-    "name": null,
-    "rawSpec": "/tmp/d-118121-20820-r0vp8q.98vk6b6gvi/package.tgz",
-    "spec": "/tmp/d-118121-20820-r0vp8q.98vk6b6gvi/package.tgz",
-    "type": "local"
+    "type": "remote",
+    "raw": "https://www.atom.io/api/packages/linter-puppet-lint/versions/0.9.0/tarball",
+    "rawSpec": "https://www.atom.io/api/packages/linter-puppet-lint/versions/0.9.0/tarball",
+    "saveSpec": "https://www.atom.io/api/packages/linter-puppet-lint/versions/0.9.0/tarball",
+    "fetchSpec": "https://www.atom.io/api/packages/linter-puppet-lint/versions/0.9.0/tarball"
   },
   "_requiredBy": [
-    "#USER"
+    "#USER",
+    "/"
   ],
-  "_resolved": "file:../d-118121-20820-r0vp8q.98vk6b6gvi/package.tgz",
-  "_shasum": "fd6daeee2f88af784e58223448e6e8b436d39833",
-  "_shrinkwrap": null,
-  "_spec": "/tmp/d-118121-20820-r0vp8q.98vk6b6gvi/package.tgz",
-  "_where": "/tmp/apm-install-dir-118121-20820-sz7ebe.xr1igm0a4i",
+  "_resolved": "https://www.atom.io/api/packages/linter-puppet-lint/versions/0.9.0/tarball",
+  "_shasum": "d571c7b63032130ba59213f43ed589d4487bb445",
+  "_spec": "https://www.atom.io/api/packages/linter-puppet-lint/versions/0.9.0/tarball",
+  "_where": "C:\\Users\\mungerc\\AppData\\Local\\Temp\\apm-install-dir-119922-76284-gwugks.vm1bi",
   "bugs": {
     "url": "https://github.com/AtomLinter/linter-puppet-lint/issues"
   },
+  "bundleDependencies": false,
   "configSchema": {
     "executablePath": {
       "title": "Executable path",
@@ -151,7 +137,7 @@
       "type": "boolean",
       "default": false
     },
-    "skipPuppetUrlWhitoutModules": {
+    "skipPuppetUrlWithoutModules": {
       "title": "Skip the puppet_url_without_modules check",
       "type": "boolean",
       "default": false
@@ -171,13 +157,8 @@
       "type": "boolean",
       "default": false
     },
-    "skip80Chars": {
-      "title": "Skip the 80chars check (puppet-lint <= 1.1.0)",
-      "type": "boolean",
-      "default": false
-    },
     "skip140Chars": {
-      "title": "Skip the 140chars check (puppet-lint >= 2.0.0)",
+      "title": "Skip the 140chars check",
       "type": "boolean",
       "default": false
     },
@@ -228,15 +209,16 @@
     }
   },
   "dependencies": {
-    "atom-linter": "^10.0.0",
-    "atom-package-deps": "^4.0.1"
+    "atom-linter": "10.0.0",
+    "atom-package-deps": "5.1.0"
   },
+  "deprecated": false,
   "description": "Lint puppet on save using puppet-lint",
   "devDependencies": {
-    "eslint": "^4.6.0",
-    "eslint-config-airbnb-base": "^12.0.0",
-    "eslint-plugin-import": "^2.7.0",
-    "jasmine-fix": "^1.3.0"
+    "eslint": "6.5.1",
+    "eslint-config-airbnb-base": "14.0.0",
+    "eslint-plugin-import": "2.18.2",
+    "jasmine-fix": "1.3.1"
   },
   "engines": {
     "atom": ">=1.4.0 <2.0.0"
@@ -271,7 +253,6 @@
   "license": "MIT",
   "main": "./lib/main.js",
   "name": "linter-puppet-lint",
-  "optionalDependencies": {},
   "package-deps": [
     "linter",
     "language-puppet"
@@ -284,8 +265,21 @@
       }
     }
   },
-  "readme": "# linter-puppet-lint\n\nThis package provides linter support to your Puppet manifests through Atom-Linter\nusing Puppet-Lint.\n\n![Preview](https://raw.githubusercontent.com/AtomLinter/linter-puppet-lint/master/linter_puppet_lint.png)\n\n## Installation\n\nThe `puppet-lint` gem must be installed. If you don't have `puppet-lint`\ninstalled, please follow the instructions [here](http://puppet-lint.com/).\n\nBasically, you should execute `gem install puppet-lint` or `bundle install puppet-lint`.\n\n### Compatibility\n\n__Since the 0.5.0 version this package is no longer compatible with old\nversions of puppet-lint__ because we are now using a custom log format with\n`%{line}` and `%{column}` placeholders. If you have an old version of Puppet-Lint\ninstalled, then please follow the instructions for the `puppet-lint` gem installation\nto ensure that you have the latest version of Puppet-Lint.\n\n### Plugin installation\n\n*   `$ apm install linter-puppet-lint`\n\n## Settings\n\nYou can configure Linter-Puppet-Lint by going to the settings menu in Atom or\nby editing ``~/.atom/config.cson` (choose Open Your Config in Atom menu):\n\n```coffeescript\n'linter-puppet-lint':\n  'executablePath': '/usr/bin/puppet-lint' # puppet-lint path.\n```\n",
-  "readmeFilename": "README.md",
+  "renovate": {
+    "extends": [
+      "config:base"
+    ],
+    "semanticCommits": true,
+    "rangeStrategy": "pin",
+    "packageRules": [
+      {
+        "packagePatterns": [
+          "^eslint"
+        ],
+        "groupName": "ESLint packages"
+      }
+    ]
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/AtomLinter/linter-puppet-lint.git"
@@ -294,5 +288,5 @@
     "lint": "eslint .",
     "test": "apm test"
   },
-  "version": "0.8.4"
+  "version": "0.9.0"
 }

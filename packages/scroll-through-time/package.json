@@ -1,46 +1,32 @@
 {
-  "_args": [
-    [
-      {
-        "raw": "/tmp/d-118122-9947-rv9db7.w8ab81tt9/package.tgz",
-        "scope": null,
-        "escapedName": null,
-        "name": null,
-        "rawSpec": "/tmp/d-118122-9947-rv9db7.w8ab81tt9/package.tgz",
-        "spec": "/tmp/d-118122-9947-rv9db7.w8ab81tt9/package.tgz",
-        "type": "local"
-      },
-      "/tmp/apm-install-dir-118122-9947-hqy6xb.5iezmpldi"
-    ]
-  ],
-  "_from": "../d-118122-9947-rv9db7.w8ab81tt9/package.tgz",
-  "_id": "scroll-through-time@0.3.0",
-  "_inCache": true,
+  "_from": "https://www.atom.io/api/packages/scroll-through-time/versions/0.3.1/tarball",
+  "_id": "scroll-through-time@0.3.1",
+  "_inBundle": false,
+  "_integrity": "sha512-EHjT1Mw0EYYb5VZyg0DZMn9q5DD/WDkzYF5dMfEnV1H7rod/DUzJPpTlGgYkVHoCXeKG6xn0oD8V1l7z3tFBQQ==",
   "_location": "/scroll-through-time",
   "_phantomChildren": {},
   "_requested": {
-    "raw": "/tmp/d-118122-9947-rv9db7.w8ab81tt9/package.tgz",
-    "scope": null,
-    "escapedName": null,
-    "name": null,
-    "rawSpec": "/tmp/d-118122-9947-rv9db7.w8ab81tt9/package.tgz",
-    "spec": "/tmp/d-118122-9947-rv9db7.w8ab81tt9/package.tgz",
-    "type": "local"
+    "type": "remote",
+    "raw": "https://www.atom.io/api/packages/scroll-through-time/versions/0.3.1/tarball",
+    "rawSpec": "https://www.atom.io/api/packages/scroll-through-time/versions/0.3.1/tarball",
+    "saveSpec": "https://www.atom.io/api/packages/scroll-through-time/versions/0.3.1/tarball",
+    "fetchSpec": "https://www.atom.io/api/packages/scroll-through-time/versions/0.3.1/tarball"
   },
   "_requiredBy": [
-    "#USER"
+    "#USER",
+    "/"
   ],
-  "_resolved": "file:../d-118122-9947-rv9db7.w8ab81tt9/package.tgz",
-  "_shasum": "462bed4bd113165fa69320916196891ce0895e90",
-  "_shrinkwrap": null,
-  "_spec": "/tmp/d-118122-9947-rv9db7.w8ab81tt9/package.tgz",
-  "_where": "/tmp/apm-install-dir-118122-9947-hqy6xb.5iezmpldi",
+  "_resolved": "https://www.atom.io/api/packages/scroll-through-time/versions/0.3.1/tarball",
+  "_shasum": "0f73adbe42091588de65897a32ca72c4b99a0747",
+  "_spec": "https://www.atom.io/api/packages/scroll-through-time/versions/0.3.1/tarball",
+  "_where": "C:\\Users\\mungerc\\AppData\\Local\\Temp\\apm-install-dir-119922-73368-1sidjys.j8l5",
   "bugs": {
     "url": "https://github.com/mathieudutour/scroll-through-time/issues"
   },
+  "bundleDependencies": false,
   "dependencies": {},
+  "deprecated": false,
   "description": "Two fingers scroll moves through time instead of space",
-  "devDependencies": {},
   "engines": {
     "atom": ">=1.0.0 <2.0.0"
   },
@@ -54,12 +40,9 @@
   "license": "MIT",
   "main": "./lib/scroll-through-time",
   "name": "scroll-through-time",
-  "optionalDependencies": {},
-  "readme": "# scroll-through-time\n\nTwo fingers (horizontal) scroll moves through time instead of space in [Atom](https://atom.io/)\n\n![demo](https://github.com/mathieudutour/scroll-through-time/raw/master/screencast.gif)\n\n## Installation\n\n```\napm install scroll-through-time\n```\n\n## Why?\n![If used with software that could keep up, a scroll wheel mapped to send a stream of 'undo' and 'redo' events could be kind of cool.](https://imgs.xkcd.com/comics/borrow_your_laptop.png)\n_ xkcd ([#1806](https://xkcd.com/1806/))\n",
-  "readmeFilename": "README.md",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mathieudutour/scroll-through-time.git"
   },
-  "version": "0.3.0"
+  "version": "0.3.1"
 }
