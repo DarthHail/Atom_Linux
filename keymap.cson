@@ -36,4 +36,3 @@
   'ctrl-alt-1': 'git-plus:diff'
 
   'ctrl-alt-2': 'git-plus:add-all'
-  'ctrl-alt-3': 'git-plus:add-all-and-commit'
